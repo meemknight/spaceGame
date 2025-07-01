@@ -15,14 +15,15 @@
 #include <logs.h>
 #include "shader.h"
 #include "assetManager.h"
+#include "renderingThing.h"
 
 
 gl2d::Renderer2D renderer;
-Shader backgroundShader;
-Shader default3DShader;
-Shader holographicShader;
+
 AssetManager assetManager;
 gl2d::FrameBuffer background;
+RenderingThing renderingThing;
+
 
 
 bool initGame()
@@ -34,9 +35,6 @@ bool initGame()
 
 	platform::log("Init");
 
-	backgroundShader.load(RESOURCES_PATH "space.frag");
-	holographicShader.load3DShader(RESOURCES_PATH "balatro.frag");
-	default3DShader.loadDefault3DShader();
 	assetManager.loadAll();
 	background.create(1, 1);
 
@@ -67,14 +65,16 @@ bool gameLogic(float deltaTime, platform::Input &input)
 
 	background.resize(w, h);
 
+	renderingThing.shakeMotionState.position = {200,200};
+
 	//background
 	{
 		renderer.pushCamera();
-		renderer.pushShader(backgroundShader.shader);
-		glUseProgram(backgroundShader.shader.id);
-		glUniform2f(backgroundShader.iResolution, w, h);
-		glUniform1f(backgroundShader.iTime, timer);
-		renderer.renderRectangle({0,0, w, h}, {1,1,1,0.5});
+		renderer.pushShader(assetManager.backgroundShader.shader);
+		glUseProgram(assetManager.backgroundShader.shader.id);
+		glUniform2f(assetManager.backgroundShader.iResolution, w, h);
+		glUniform1f(assetManager.backgroundShader.iTime, timer);
+		renderer.renderRectangle({0,0, w, h});
 		renderer.flushFBO(background);
 		renderer.popShader();
 
@@ -96,34 +96,27 @@ bool gameLogic(float deltaTime, platform::Input &input)
 		cursorPos = glm::clamp(cursorPos, glm::vec2(0), glm::vec2(1.f));
 		cursorPos -= glm::vec2(0.5f); // Now range is [-0.5, 0.5]
 
-		// Scale sensitivity — tweak this value to make rotation more or less pronounced
-		float rotationScale = 0.7f; // Radians max rotation per axis
-		float angleX = -cursorPos.y * rotationScale; // up/down moves rotate around X
-		float angleY = cursorPos.x * rotationScale;  // left/right moves rotate around Y
+		renderingThing.shakeMotionState.update(deltaTime);
 
-		glm::mat4 rotX = glm::rotate(glm::mat4(1.0f), angleX, glm::vec3(1, 0, 0));
-		glm::mat4 rotY = glm::rotate(glm::mat4(1.0f), angleY, glm::vec3(0, 1, 0));
-
-		rotationMatrix = rotY * rotX;
-		//auto project = glm::perspective(glm::radians(90.f), (float)w / (float)h, 0.01f, 100.f);
-		//rotationMatrix = project * rotationMatrix;
-
-		renderer.pushShader(holographicShader.shader);
-		glUseProgram(holographicShader.shader.id);
-		glUniform2f(holographicShader.iResolution, w, h);
-		glUniform1f(holographicShader.iTime, timer);
-		glUniformMatrix4fv(holographicShader.u_viewProjection, 1, 0, &rotationMatrix[0][0]);
-		renderer.renderRectangle({300, 300, 400, 400}, assetManager.emptyCard);
-		renderer.flush();
-		renderer.popShader();
+		renderingThing.render(renderer, assetManager, w, h, timer);
 
 
-		renderer.pushShader(default3DShader.shader);
-		glUseProgram(default3DShader.shader.id);
-		glUniformMatrix4fv(default3DShader.u_viewProjection, 1, 0, &rotationMatrix[0][0]);
-		renderer.renderRectangle({300, 300, 400, 400}, assetManager.earthCard);
-		renderer.flush();
-		renderer.popShader();
+		//renderer.pushShader(holographicShader.shader);
+		//glUseProgram(holographicShader.shader.id);
+		//glUniform2f(holographicShader.iResolution, w, h);
+		//glUniform1f(holographicShader.iTime, timer);
+		//glUniformMatrix4fv(holographicShader.u_viewProjection, 1, 0, &rotationMatrix[0][0]);
+		//renderer.renderRectangle({300, 300, 400, 400}, assetManager.emptyCard);
+		//renderer.flush();
+		//renderer.popShader();
+		//
+		//
+		//renderer.pushShader(default3DShader.shader);
+		//glUseProgram(default3DShader.shader.id);
+		//glUniformMatrix4fv(default3DShader.u_viewProjection, 1, 0, &rotationMatrix[0][0]);
+		//renderer.renderRectangle({300, 300, 400, 400}, assetManager.earthCard);
+		//renderer.flush();
+		//renderer.popShader();
 
 	}
 

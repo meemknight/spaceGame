@@ -19,3 +19,19 @@ struct Shader
 	void loadUniforms();
 
 };
+
+
+struct AssetManager
+{
+
+	gl2d::Texture emptyCard;
+	gl2d::Texture earthCard;
+	gl2d::Texture cardPacket;
+
+	Shader backgroundShader;
+	Shader default3DShader;
+	Shader holographicShader;
+
+	void loadAll();
+
+};

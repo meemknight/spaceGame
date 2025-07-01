@@ -71,3 +71,26 @@ void Shader::loadDefault3DShader()
 	shader = gl2d::createShaderProgram(default3DVertexShader, defaultFragmentShader);
 	loadUniforms();
 }
+
+
+
+
+void AssetManager::loadAll()
+{
+
+	backgroundShader.load(RESOURCES_PATH "space.frag");
+	holographicShader.load3DShader(RESOURCES_PATH "balatro.frag");
+	default3DShader.loadDefault3DShader();
+
+	auto load = [&](const char *p)
+	{
+		gl2d::Texture t;
+		t.loadFromFile(p, false, true);
+		return t;
+	};
+
+	emptyCard = load(RESOURCES_PATH "cards/empty.png");
+	earthCard = load(RESOURCES_PATH "cards/earth.png");
+	cardPacket = load(RESOURCES_PATH "cards/cardpack.png");
+
+}
