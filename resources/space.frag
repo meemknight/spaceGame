@@ -7,6 +7,7 @@ in vec2 v_texture;
 uniform sampler2D u_sampler;
 uniform vec2 iResolution;
 uniform float iTime = 10;
+const float timeMultiplier = 0.1;
 
 //https://www.shadertoy.com/view/MslGWN
 //CBS
@@ -16,7 +17,7 @@ uniform float iTime = 10;
 
 // http://www.fractalforums.com/new-theories-and-research/very-simple-formula-for-fractal-patterns/
 float field(in vec3 p,float s) {
-	float strength = 7. + .03 * log(1.e-6 + fract(sin(iTime) * 4373.11));
+	float strength = 7. + .03 * log(1.e-6 + fract(sin(iTime * timeMultiplier) * 4373.11));
 	float accum = s/4.;
 	float prev = 0.;
 	float tw = 0.;
@@ -33,12 +34,12 @@ float field(in vec3 p,float s) {
 
 // Less iterations for second layer
 float field2(in vec3 p, float s) {
-	float strength = 7. + .03 * log(1.e-6 + fract(sin(iTime) * 4373.11));
+	float strength = 7. + .03 * log(1.e-6 + fract(sin(iTime* timeMultiplier) * 4373.11));
 	float accum = s/4.;
 	float prev = 0.;
 	float tw = 0.;
 	for (int i = 0; i < 18; ++i) {
-		float mag = dot(p, p)  + (sin(iTime * 0.01)) * 0.01;
+		float mag = dot(p, p)  + (sin(iTime * 0.01 * timeMultiplier)) * 0.01;
 		p = abs(p) / mag + vec3(-.5, -.4, -1.5);
 		float w = exp(-float(i) / 6.);
 		accum += w * exp(-strength * pow(abs(mag - prev), 2.2));
@@ -60,7 +61,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
 	fragColor = vec4(0,0,0,0);
 
-	float timeSpeed = iTime * 0.3;
+	float timeSpeed = iTime * timeMultiplier * 0.5;
 
 	vec2 uv = 2. * fragCoord.xy / iResolution.xy - 1.;
 	uv *= 0.95;
@@ -126,7 +127,7 @@ void main()
 	vec4 outColor = vec4(0, 0, 0, 0);
 
 	mainImage(outColor, gl_FragCoord.xy);
-	outColor.a = 1;
+	outColor.a = 0.1;
 
 	color = outColor;
 

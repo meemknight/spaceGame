@@ -3,6 +3,7 @@ precision highp float;
 
 out vec4 color;
 in vec2 v_texture;
+in vec3 v_normal;
 
 uniform sampler2D u_sampler;
 uniform vec2 iResolution;
@@ -141,7 +142,7 @@ vec3 effectHolographic(vec3 baseColor, vec2 uv, vec3 n, vec3 v, vec3 l) {
 	// Light reflection intensity
 	float lighting = 0.3 + 0.7 * clamp(dot(n, l), 0.0, 1.0);
 	float ndotl = clamp(dot(n, l), 0.0, 1.0);
-	float spec = 0.5 + 0.8 * pow(clamp(dot(reflect(-l, n), v), 0.0, 1.0), 32.0);
+	float spec = 0.5 + 1.2 * pow(clamp(dot(reflect(-l, n), v), 0.0, 1.0), 32.0);
 	
 	lighting *= spec * lightingMultiplier;
 
@@ -241,7 +242,7 @@ vec3 sticker(vec2 planeUV, vec3 planeNormal, vec3 hitPos)
 	vec3 camPos = ro;                        // camera in front of plane
 	vec3 fragPos = hitPos;                   // from your ray-plane intersection
 	vec3 v = normalize(camPos - fragPos);    // view direction
-	vec3 l = normalize(vec3(sin(iTime*0.1) - 0.5, cos(iTime*0.07)*0.2 - 0.3, 4.0)); // some constant directional light
+	vec3 l = normalize(vec3(sin(iTime*0.1)*0.3 + 0.85, cos(iTime*0.07)*0.2 + 0.88, 4.0)); // some constant directional light
 
 
 	vec3 baseColor = texture(u_sampler, planeUV).rgb;
@@ -267,7 +268,7 @@ void main()
 	if(opacity < 0.1){discard;}
 
 	//gl_FragCoord.xy
-	color = vec4(sticker(v_texture, vec3(0,0,1), vec3(gl_FragCoord.xy, 0)), 1);
+	color = vec4(sticker(v_texture, v_normal, vec3(v_texture.xy, 0)), 1);
 
 }
 
