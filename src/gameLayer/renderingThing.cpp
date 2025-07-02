@@ -45,7 +45,7 @@ glm::mat4 ShakeMotionState::getRotationMatrix()
 
 	glm::mat4 perspectiveOnlyW = glm::mat4(1.0f);
 	// Set perspective effect strength
-	float perspectiveStrength = -2.0f; // negative to make +z shrink away
+	float perspectiveStrength = -1.0f; // negative to make +z shrink away
 	// This sets w = w + z * perspectiveStrength
 	perspectiveOnlyW[3][2] = perspectiveStrength;
 
@@ -63,8 +63,8 @@ void RenderingThing::render(gl2d::Renderer2D &renderer, AssetManager &assetManag
 	renderer.pushShader(assetManager.default3DShader.shader);
 	glUseProgram(assetManager.default3DShader.shader.id);
 	glUniformMatrix4fv(assetManager.default3DShader.u_viewProjection, 1, 0, &rotationMatrix[0][0]);
-	renderer.renderRectangle({shakeMotionState.position + glm::vec2(20,20), 400, 400}, assetManager.cardPacket, 
-		{0,0,0,0.4});
+	renderer.renderRectangle({shakeMotionState.position + glm::vec2(20,20), 400, 400}, 
+		assetManager.cardPacket, {0,0,0,0.4}, {}, 0, GL2D_DefaultTextureCoords, 0.5);
 	renderer.flush();
 	renderer.popShader();
 
@@ -74,7 +74,8 @@ void RenderingThing::render(gl2d::Renderer2D &renderer, AssetManager &assetManag
 	glUniform2f(assetManager.holographicShader.iResolution, w, h);
 	glUniform1f(assetManager.holographicShader.iTime, timer);
 	glUniformMatrix4fv(assetManager.holographicShader.u_viewProjection, 1, 0, &rotationMatrix[0][0]);
-	renderer.renderRectangle({shakeMotionState.position, 400, 400}, assetManager.cardPacket);
+	renderer.renderRectangle({shakeMotionState.position, 400, 400}, assetManager.cardPacket, 
+		Colors_White, {}, 0, GL2D_DefaultTextureCoords, 0.5);
 	renderer.flush();
 	renderer.popShader();
 
