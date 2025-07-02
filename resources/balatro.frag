@@ -111,7 +111,7 @@ vec3 effectHolographic(vec3 baseColor, vec2 uv, vec3 n, vec3 v, vec3 l) {
 	float timeDistort = sin(iTime * 0.1);
 	
 	float holoMultiplier = 2.3;
-	float lightingMultiplier = 1.3;
+	float specLightingMultiplier = 1.9;
 
 	// View-dependent shift using Fresnel term
 	float fresnel = pow(1.0 - max(dot(n, v), 0.0), 0.9);
@@ -144,7 +144,7 @@ vec3 effectHolographic(vec3 baseColor, vec2 uv, vec3 n, vec3 v, vec3 l) {
 	float ndotl = clamp(dot(n, l), 0.0, 1.0);
 	float spec = 0.5 + 1.2 * pow(clamp(dot(reflect(-l, n), v), 0.0, 1.0), 32.0);
 	
-	lighting *= spec * lightingMultiplier;
+	lighting *= spec * specLightingMultiplier;
 
 	// Distortion shimmer
 	float distort = 0.08 * sin(uv.y * 100.0 + timeDistort * 5.0 + dotNC * 210.0

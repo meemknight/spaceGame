@@ -23,6 +23,7 @@ gl2d::Renderer2D renderer;
 AssetManager assetManager;
 gl2d::FrameBuffer background;
 RenderingThing renderingThing;
+gl2d::Camera3D camera3D;
 
 
 
@@ -63,6 +64,10 @@ bool gameLogic(float deltaTime, platform::Input &input)
 	static float timer = 0;
 	timer += deltaTime;
 
+#if DEVELOPLEMT_BUILD == 1
+	assetManager.tryReload();
+#endif
+
 	background.resize(w, h);
 
 	renderingThing.shakeMotionState.position = {200,200};
@@ -86,6 +91,9 @@ bool gameLogic(float deltaTime, platform::Input &input)
 
 	}
 
+	camera3D.fovRadians = glm::radians(90.f);
+	camera3D.aspectRatio = w / (float)h;
+	camera3D.position = {0,0, 4};
 
 	//basic cards
 	if(w != 0 && h != 0)
@@ -98,7 +106,7 @@ bool gameLogic(float deltaTime, platform::Input &input)
 
 		renderingThing.shakeMotionState.update(deltaTime);
 
-		renderingThing.render(renderer, assetManager, w, h, timer);
+		renderingThing.render(renderer, camera3D, assetManager, w, h, timer);
 
 
 		//renderer.pushShader(holographicShader.shader);

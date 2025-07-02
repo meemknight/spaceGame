@@ -7,7 +7,7 @@ void ShakeMotionState::update(float deltaTime)
 	time += deltaTime;
 
 	// Small back-and-forth wiggle angle
-	float angle = time * 0.2f; // adjust speed/amplitude as needed
+	float angle = time * 2.f; // adjust speed/amplitude as needed
 
 	// Rotate around Z axis (top axis)
 	glm::mat4 wiggleRot = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1));
@@ -52,7 +52,8 @@ glm::mat4 ShakeMotionState::getRotationMatrix()
 	return perspectiveOnlyW * rotation;
 }
 
-void RenderingThing::render(gl2d::Renderer2D &renderer, AssetManager &assetManager
+void RenderingThing::render(gl2d::Renderer2D &renderer, 
+	gl2d::Camera3D &camera3D, AssetManager &assetManager
 	, float w, float h, float timer)
 {
 
@@ -60,21 +61,27 @@ void RenderingThing::render(gl2d::Renderer2D &renderer, AssetManager &assetManag
 	//auto project = glm::perspective(glm::radians(90.f), (float)w / (float)h, 0.01f, 100.f);
 	//rotationMatrix = project * rotationMatrix;
 
-	renderer.pushShader(assetManager.default3DShader.shader);
-	glUseProgram(assetManager.default3DShader.shader.id);
-	glUniformMatrix4fv(assetManager.default3DShader.u_viewProjection, 1, 0, &rotationMatrix[0][0]);
-	renderer.renderRectangle({shakeMotionState.position + glm::vec2(20,20), 400, 400}, 
-		assetManager.cardPacket, {0,0,0,0.4}, {}, 0, GL2D_DefaultTextureCoords, 0.5);
-	renderer.flush();
-	renderer.popShader();
+	glm::mat4 modelVireProjMatrix = camera3D.getViewProjectionMatrix() * rotationMatrix;
+
+	glm::vec4 fullQuadSize = {0, 0, renderer.windowW, renderer.windowH};
+
+	//shadow
+	//renderer.pushShader(assetManager.default3DShader.shader);
+	//glUseProgram(assetManager.default3DShader.shader.id);
+	//glUniformMatrix4fv(assetManager.default3DShader.u_viewProjection, 1, 0, &modelVireProjMatrix[0][0]);
+	//renderer.renderRectangle(fullQuadSize,
+	//	assetManager.cardPacket, {0,0,0,0.4}, {}, 0, GL2D_DefaultTextureCoords, 0.5);
+	//renderer.flush();
+	//renderer.popShader();
 
 
 	renderer.pushShader(assetManager.holographicShader.shader);
 	glUseProgram(assetManager.holographicShader.shader.id);
 	glUniform2f(assetManager.holographicShader.iResolution, w, h);
 	glUniform1f(assetManager.holographicShader.iTime, timer);
-	glUniformMatrix4fv(assetManager.holographicShader.u_viewProjection, 1, 0, &rotationMatrix[0][0]);
-	renderer.renderRectangle({shakeMotionState.position, 400, 400}, assetManager.cardPacket, 
+	glUniformMatrix4fv(assetManager.holographicShader.u_viewProjection, 1, 0, &modelVireProjMatrix[0][0]);
+	glUniformMatrix4fv(assetManager.holographicShader.u_model, 1, 0, &rotationMatrix[0][0]);
+	renderer.renderRectangle(fullQuadSize, assetManager.cardPacket,
 		Colors_White, {}, 0, GL2D_DefaultTextureCoords, 0.5);
 	renderer.flush();
 	renderer.popShader();

@@ -31,7 +31,9 @@ struct RenderingThing
 
 	ShakeMotionState shakeMotionState;
 
-	void render(gl2d::Renderer2D &renderer, AssetManager &assetManager,
+	void render(gl2d::Renderer2D &renderer,
+		gl2d::Camera3D &camera3D,
+		AssetManager &assetManager,
 		float w, float h, float timer);
 
 
