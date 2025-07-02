@@ -42,6 +42,34 @@ bool initGame()
 	return true;
 }
 
+glm::vec2 fromCursorToWorldPosition(
+	float cursorX, float cursorY,
+	int screenWidth, int screenHeight,
+	const glm::mat4 &viewMatrix,
+	const glm::mat4 &projectionMatrix)
+{
+	glm::vec4 viewport(0, 0, screenWidth, screenHeight);
+
+	glm::vec3 pNear = glm::unProject(
+		glm::vec3(cursorX, screenHeight - cursorY, 0.0f),
+		viewMatrix,
+		projectionMatrix,
+		viewport
+	);
+
+	glm::vec3 pFar = glm::unProject(
+		glm::vec3(cursorX, screenHeight - cursorY, 1.0f),
+		viewMatrix,
+		projectionMatrix,
+		viewport
+	);
+
+	glm::vec3 dir = pFar - pNear;
+	float t = -pNear.z / dir.z;  // intersect Z = 0
+	glm::vec3 intersection = pNear + dir * t;
+	return glm::vec2(intersection.x, intersection.y);
+}
+
 
 //IMPORTANT NOTICE, IF YOU WANT TO SHIP THE GAME TO ANOTHER PC READ THE README.MD IN THE GITHUB
 //https://github.com/meemknight/cmakeSetup
@@ -70,7 +98,17 @@ bool gameLogic(float deltaTime, platform::Input &input)
 
 	background.resize(w, h);
 
-	renderingThing.shakeMotionState.position = {1,1, 0};
+
+	glm::vec2 mousePosition = {input.mouseX, input.mouseY};
+	mousePosition = glm::clamp(mousePosition, glm::vec2(0, 0), glm::vec2(w, h));
+
+	glm::vec2 worldPosition = fromCursorToWorldPosition(mousePosition.x,
+		mousePosition.y, w, h, camera3D.getViewMatrix(),
+		camera3D.getProjectionMatrix());
+
+	renderingThing.shakeMotionState.position = {worldPosition, 0};
+
+	//std::cout << worldPosition.x << " " << worldPosition.y << "\n";
 
 	//background
 	{
@@ -93,7 +131,7 @@ bool gameLogic(float deltaTime, platform::Input &input)
 
 	camera3D.fovRadians = glm::radians(90.f);
 	camera3D.aspectRatio = w / (float)h;
-	camera3D.position = {0,0, 4};
+	camera3D.position = {0,0, 5};
 
 	//basic cards
 	if(w != 0 && h != 0)

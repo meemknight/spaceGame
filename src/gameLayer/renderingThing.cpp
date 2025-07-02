@@ -6,6 +6,7 @@
 
 void ShakeMotionState::update(float deltaTime)
 {
+	return;
 	time += deltaTime;
 
 	// Small back-and-forth wiggle angle
@@ -45,13 +46,7 @@ glm::mat4 ShakeMotionState::getRotationMatrix()
 	rotation[1] = glm::vec4(adjustedUp, 0.0f);
 	rotation[2] = glm::vec4(forward, 0.0f);
 
-	glm::mat4 perspectiveOnlyW = glm::mat4(1.0f);
-	// Set perspective effect strength
-	float perspectiveStrength = -1.0f; // negative to make +z shrink away
-	// This sets w = w + z * perspectiveStrength
-	perspectiveOnlyW[3][2] = perspectiveStrength;
-
-	return perspectiveOnlyW * rotation;
+	return rotation;
 }
 
 void RenderingThing::render(gl2d::Renderer2D &renderer,
@@ -94,7 +89,7 @@ void RenderingThing::render(gl2d::Renderer2D &renderer,
 		bindShaderAndSendUniforms(assetManager.default3DShader, 
 			shadowModelVireProjMatrix, shadowModelMatrix);
 		renderer.renderRectangle(fullQuadSize,
-			assetManager.cardPacket, {0,0,0,0.5});
+			assetManager.emptyCard, {0,0,0,0.5});
 		renderer.flush();
 		renderer.popShader();
 
@@ -106,8 +101,8 @@ void RenderingThing::render(gl2d::Renderer2D &renderer,
 	
 	bindShaderAndSendUniforms(assetManager.holographicShader, modelVireProjMatrix, modelMatrix);
 	
-	renderer.renderRectangle(fullQuadSize, assetManager.cardPacket,
-		Colors_White, {}, 0, GL2D_DefaultTextureCoords, 0.5);
+	renderer.renderRectangle(fullQuadSize, assetManager.emptyCard,
+		Colors_White, {}, 0, GL2D_DefaultTextureCoords, 0.0);
 	renderer.flush();
 	renderer.popShader();
 
