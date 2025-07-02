@@ -106,7 +106,7 @@ bool gameLogic(float deltaTime, platform::Input &input)
 		mousePosition.y, w, h, camera3D.getViewMatrix(),
 		camera3D.getProjectionMatrix());
 
-	renderingThing.shakeMotionState.position = {worldPosition, 0};
+	renderingThing.shakeMotionState.desiredPosition = {worldPosition, 0};
 
 	//std::cout << worldPosition.x << " " << worldPosition.y << "\n";
 

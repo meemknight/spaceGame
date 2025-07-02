@@ -3,24 +3,82 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 #include <shader.h>
+#include <glm/gtx/vector_angle.hpp>
 
 void ShakeMotionState::update(float deltaTime)
 {
-	return;
 	time += deltaTime;
 
-	// Small back-and-forth wiggle angle
-	float angle = time * 2.f; // adjust speed/amplitude as needed
+	//// Small back-and-forth wiggle angle
+	//float angle = time * 2.f; // adjust speed/amplitude as needed
+	//// Rotate around Z axis (top axis)
+	//glm::mat4 wiggleRot = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1));
+	//// Apply wiggle to the base orientation vector
+	//glm::vec4 rotated = wiggleRot * glm::vec4(glm::normalize(glm::vec3(0,0.3,1)),
+	//	0.0f);
+	//currentOrientation = glm::normalize(glm::vec3(rotated));
+	//currentRotation = sin(time * 0.2f) * 0.5f;
 
-	// Rotate around Z axis (top axis)
-	glm::mat4 wiggleRot = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1));
+	//position
+	{
+		float dist = glm::distance(glm::vec2(position), glm::vec2(desiredPosition));
+		float speed = 10;
 
-	// Apply wiggle to the base orientation vector
-	glm::vec4 rotated = wiggleRot * glm::vec4(glm::normalize(glm::vec3(0,0.3,1)),
-		0.0f);
-	currentOrientation = glm::normalize(glm::vec3(rotated));
+		if (dist < 0.001f)
+		{
+			position = desiredPosition;
+			desiredOrientation = {0,0,1};
+		}
+		else
+		{
+			glm::vec2 dir = glm::vec2(desiredPosition) - glm::vec2(position);
 
-	currentRotation = sin(time * 0.2f) * 0.5f;
+			// Scale the interpolation by distance and time to create a velocity effect
+			float t = 1.0f - std::exp(-speed * deltaTime);
+
+			glm::vec2 newPos = glm::vec2(position) + dir * t;
+			position = glm::vec3(newPos, position.z);
+
+			glm::vec2 clampedDir = glm::vec2(dir);
+			if (glm::length(clampedDir) > 2)
+			{
+				clampedDir = glm::normalize(clampedDir) * 2.f;
+			}
+
+			desiredOrientation = glm::normalize(glm::vec3{dir*0.3f,1.f});
+
+		}
+
+	}
+
+	//direction
+	{
+
+		float smoothness = 12.0f;
+
+		smoothness /=
+			(
+			glm::pow(
+			glm::clamp(glm::dot(desiredOrientation, glm::vec3(0, 0, 1)), 0.f, 1.f),
+			2.f) * 2.f
+			);
+
+		float t = 1.0f - std::exp(-smoothness * deltaTime);
+		t = glm::clamp(t, 0.f, 1.f);
+
+		currentOrientation = (glm::mix(currentOrientation, desiredOrientation, t));
+
+		float l = glm::length(currentOrientation);
+		if (l > 0.0001) { currentOrientation /= l; }
+		else
+		{
+			currentOrientation = desiredOrientation;
+		}
+
+
+	}
+
+
 }
 
 glm::mat4 ShakeMotionState::getRotationMatrix()
