@@ -20,7 +20,7 @@ struct ShakeMotionState
 	glm::mat4 getRotationMatrix();
 
 
-	glm::vec2 position = {};
+	glm::vec3 position = {};
 
 
 };

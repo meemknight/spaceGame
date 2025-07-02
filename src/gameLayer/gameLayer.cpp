@@ -70,7 +70,7 @@ bool gameLogic(float deltaTime, platform::Input &input)
 
 	background.resize(w, h);
 
-	renderingThing.shakeMotionState.position = {200,200};
+	renderingThing.shakeMotionState.position = {1,1, 0};
 
 	//background
 	{

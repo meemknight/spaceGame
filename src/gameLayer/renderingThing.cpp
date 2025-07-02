@@ -1,5 +1,7 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include "renderingThing.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 #include <shader.h>
 
 void ShakeMotionState::update(float deltaTime)
@@ -52,35 +54,58 @@ glm::mat4 ShakeMotionState::getRotationMatrix()
 	return perspectiveOnlyW * rotation;
 }
 
-void RenderingThing::render(gl2d::Renderer2D &renderer, 
+void RenderingThing::render(gl2d::Renderer2D &renderer,
 	gl2d::Camera3D &camera3D, AssetManager &assetManager
 	, float w, float h, float timer)
 {
+
+	glm::mat4 positionMatrix = glm::translate(shakeMotionState.position);
 
 	glm::mat4 rotationMatrix = shakeMotionState.getRotationMatrix();
 	//auto project = glm::perspective(glm::radians(90.f), (float)w / (float)h, 0.01f, 100.f);
 	//rotationMatrix = project * rotationMatrix;
 
-	glm::mat4 modelVireProjMatrix = camera3D.getViewProjectionMatrix() * rotationMatrix;
+	glm::mat4 modelMatrix = positionMatrix * rotationMatrix;
+
+	glm::mat4 modelVireProjMatrix = camera3D.getViewProjectionMatrix() * modelMatrix;
 
 	glm::vec4 fullQuadSize = {0, 0, renderer.windowW, renderer.windowH};
 
-	//shadow
-	//renderer.pushShader(assetManager.default3DShader.shader);
-	//glUseProgram(assetManager.default3DShader.shader.id);
-	//glUniformMatrix4fv(assetManager.default3DShader.u_viewProjection, 1, 0, &modelVireProjMatrix[0][0]);
-	//renderer.renderRectangle(fullQuadSize,
-	//	assetManager.cardPacket, {0,0,0,0.4}, {}, 0, GL2D_DefaultTextureCoords, 0.5);
-	//renderer.flush();
-	//renderer.popShader();
 
+	auto bindShaderAndSendUniforms = [&](Shader &s,
+		glm::mat4 modelView, glm::mat4 model)
+	{
+		glUseProgram(s.shader.id);
+		glUniform2f(s.iResolution, w, h);
+		glUniform1f(s.iTime, timer);
+		glUniformMatrix4fv(s.u_viewProjection, 1, 0, &modelView[0][0]);
+		glUniformMatrix4fv(s.u_model, 1, 0, &model[0][0]);
+	};
+
+	auto renderShadow = [&]()
+	{
+		float shadowDistance = -0.1;
+
+		glm::mat4 positionMatrixShadow = glm::translate(shakeMotionState.position + glm::vec3{shadowDistance,shadowDistance,0});
+		glm::mat4 shadowModelMatrix = positionMatrixShadow * rotationMatrix;
+		glm::mat4 shadowModelVireProjMatrix = camera3D.getViewProjectionMatrix() * shadowModelMatrix;
+
+		renderer.pushShader(assetManager.default3DShader.shader);
+		bindShaderAndSendUniforms(assetManager.default3DShader, 
+			shadowModelVireProjMatrix, shadowModelMatrix);
+		renderer.renderRectangle(fullQuadSize,
+			assetManager.cardPacket, {0,0,0,0.5});
+		renderer.flush();
+		renderer.popShader();
+
+	};
+
+	renderShadow();
 
 	renderer.pushShader(assetManager.holographicShader.shader);
-	glUseProgram(assetManager.holographicShader.shader.id);
-	glUniform2f(assetManager.holographicShader.iResolution, w, h);
-	glUniform1f(assetManager.holographicShader.iTime, timer);
-	glUniformMatrix4fv(assetManager.holographicShader.u_viewProjection, 1, 0, &modelVireProjMatrix[0][0]);
-	glUniformMatrix4fv(assetManager.holographicShader.u_model, 1, 0, &rotationMatrix[0][0]);
+	
+	bindShaderAndSendUniforms(assetManager.holographicShader, modelVireProjMatrix, modelMatrix);
+	
 	renderer.renderRectangle(fullQuadSize, assetManager.cardPacket,
 		Colors_White, {}, 0, GL2D_DefaultTextureCoords, 0.5);
 	renderer.flush();

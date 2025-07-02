@@ -72,7 +72,7 @@ GL2D_OPNEGL_SHADER_PRECISION "\n"
 "   vec3 transformedNormal = normalize(rotationMatrix * vec3(0,0,1));\n"
 "   v_normal = transformedNormal;\n"
 "	gl_Position = u_viewProjection * vec4(quad_positions, 1);\n"
-"	//gl_Position.z = 0.5;"
+"	//gl_Position.z = 0.5;\n"
 "	v_color = quad_colors;\n"
 "	v_texture = texturePositions;\n"
 "	v_positions = gl_Position.xy;\n"
@@ -87,7 +87,7 @@ GL2D_OPNEGL_SHADER_PRECISION "\n"
 "uniform sampler2D u_sampler;\n"
 "void main()\n"
 "{\n"
-"    color = v_color * texture2D(u_sampler, v_texture);\n"
+"    color = v_color * texture(u_sampler, v_texture);\n"
 "}\n";
 
 
