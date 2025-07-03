@@ -9,32 +9,39 @@ void ShakeMotionState::update(float deltaTime)
 {
 	time += deltaTime;
 
-	//// Small back-and-forth wiggle angle
-	//float angle = time * 2.f; // adjust speed/amplitude as needed
-	//// Rotate around Z axis (top axis)
-	//glm::mat4 wiggleRot = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1));
-	//// Apply wiggle to the base orientation vector
-	//glm::vec4 rotated = wiggleRot * glm::vec4(glm::normalize(glm::vec3(0,0.3,1)),
-	//	0.0f);
-	//currentOrientation = glm::normalize(glm::vec3(rotated));
-	//currentRotation = sin(time * 0.2f) * 0.5f;
-
 	//position
 	{
 		float dist = glm::distance(glm::vec2(position), glm::vec2(desiredPosition));
-		float speed = 10;
+		float smoothness = 10;
+		desiredRotation = 0;
 
 		if (dist < 0.001f)
 		{
 			position = desiredPosition;
+			
+
 			desiredOrientation = {0,0,1};
+
+			if(1)
+			{
+				// Small back-and-forth wiggle angle
+				float angle = time * 1.f; // adjust speed/amplitude as needed
+				// Rotate around Z axis (top axis)
+				glm::mat4 wiggleRot = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1));
+				// Apply wiggle to the base orientation vector
+				glm::vec4 rotated = wiggleRot * glm::vec4(glm::normalize(glm::vec3(0,0.2,1)),
+					0.0f);
+				desiredOrientation = glm::normalize(glm::vec3(rotated));
+				
+				//desiredRotation = sin(time * 2.0f) * 1.0f;
+			}
 		}
 		else
 		{
 			glm::vec2 dir = glm::vec2(desiredPosition) - glm::vec2(position);
 
 			// Scale the interpolation by distance and time to create a velocity effect
-			float t = 1.0f - std::exp(-speed * deltaTime);
+			float t = 1.0f - std::exp(-smoothness * deltaTime);
 
 			glm::vec2 newPos = glm::vec2(position) + dir * t;
 			position = glm::vec3(newPos, position.z);
@@ -48,6 +55,15 @@ void ShakeMotionState::update(float deltaTime)
 			desiredOrientation = glm::normalize(glm::vec3{dir*0.3f,1.f});
 
 		}
+
+	}
+
+	//rotation
+	{
+		float smoothness = 10;
+		float t = 1.0f - std::exp(-smoothness * deltaTime);
+		t = glm::clamp(t, 0.f, 1.f);
+		currentRotation = currentRotation + (desiredRotation - currentRotation) * t;
 
 	}
 
@@ -147,7 +163,7 @@ void RenderingThing::render(gl2d::Renderer2D &renderer,
 		bindShaderAndSendUniforms(assetManager.default3DShader, 
 			shadowModelVireProjMatrix, shadowModelMatrix);
 		renderer.renderRectangle(fullQuadSize,
-			assetManager.emptyCard, {0,0,0,0.5});
+			assetManager.cardPacket, {0,0,0,0.5}, {}, shakeMotionState.currentRotation);
 		renderer.flush();
 		renderer.popShader();
 
@@ -159,8 +175,8 @@ void RenderingThing::render(gl2d::Renderer2D &renderer,
 	
 	bindShaderAndSendUniforms(assetManager.holographicShader, modelVireProjMatrix, modelMatrix);
 	
-	renderer.renderRectangle(fullQuadSize, assetManager.emptyCard,
-		Colors_White, {}, 0, GL2D_DefaultTextureCoords, 0.0);
+	renderer.renderRectangle(fullQuadSize, assetManager.cardPacket,
+		Colors_White, {}, shakeMotionState.currentRotation, GL2D_DefaultTextureCoords, 0.0);
 	renderer.flush();
 	renderer.popShader();
 

@@ -10,6 +10,7 @@ struct AssetManager;
 struct ShakeMotionState
 {
 	float currentRotation = 0;
+	float desiredRotation = 0;
 	float time = 0.0f;
 
 	glm::vec3 currentOrientation = {0,0,1};

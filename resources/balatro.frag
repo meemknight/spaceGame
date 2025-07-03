@@ -131,8 +131,8 @@ vec3 effectHolographic(vec3 baseColor, vec2 uv, vec3 n, vec3 v, vec3 l) {
 	float hue = fract(holo + timeHue * 0.1);
 	vec3 holoColor = 0.5 + 0.5 * cos(6.2831 * (hue + vec3(0.0, 0.3, 0.6)));
 	
-	float dotYellow = clamp(dot(holoColor, vec3(1,1,0)), 0.0, 1.0);
-	dotYellow = pow(dotYellow, 16.0);
+	//float dotYellow = clamp(dot(holoColor, vec3(1,1,0)), 0.0, 1.0);
+	//dotYellow = pow(dotYellow, 16.0);
 	//holoColor *= (1.0 - dotYellow); 
 	
 	holoColor *= holoMultiplier;
@@ -147,13 +147,23 @@ vec3 effectHolographic(vec3 baseColor, vec2 uv, vec3 n, vec3 v, vec3 l) {
 	lighting *= spec * specLightingMultiplier;
 
 	// Distortion shimmer
-	float distort = 0.08 * sin(uv.y * 100.0 + timeDistort * 5.0 + dotNC * 210.0
-		 + (v.y * 20.0 + v.x * 30.0) * 0.55
-	);
+	float distortInput = uv.y * 100.0 + timeDistort * 5.0 + dotNC * 210.0
+		 + (v.y * 20.0 + v.x * 30.0) * 0.55 + n.x * 1 + n.y * 30;
+
+	float MULT = 0.08;
+	float distort = MULT * sin( distortInput );
+	float distort2 = MULT * sin( distortInput + 2.14 );
+	float distort3 = MULT * sin( distortInput + 2.848 );
+
+	vec3 holoRGB = pow(vec3(distort,distort2,distort3), vec3(1.6));
+	holoRGB = vec3(distort);
+
+
 	//float distort = 0.08 * sin(uv.y * 100.0 + timeDistort * 5.0 + v.y * 210.0 + v.x * 30.0 );
 	
 	
-	return holoBlend(baseColor, holoColor * lighting) + distort * 0.4;
+	return holoBlend(baseColor, holoColor * lighting) + 
+	holoRGB * 0.4;
 	
 	//old
 	// Final foil color

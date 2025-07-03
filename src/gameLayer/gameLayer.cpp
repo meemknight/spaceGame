@@ -136,6 +136,33 @@ bool gameLogic(float deltaTime, platform::Input &input)
 	//basic cards
 	if(w != 0 && h != 0)
 	{
+		renderer.pushCamera();
+
+
+		//grid
+		glm::mat4 viewProj = camera3D.getViewProjectionMatrix();
+
+		renderer.pushShader(assetManager.default3DShader.shader);
+		glUseProgram(assetManager.default3DShader.shader.id);
+		glUniform2f(assetManager.default3DShader.iResolution, w, h);
+		glUniform1f(assetManager.default3DShader.iTime, timer);
+		glUniformMatrix4fv(assetManager.default3DShader.u_viewProjection, 1, 0, &viewProj[0][0]);
+		glm::vec4 fullQuadSize = {0, 0, renderer.windowW, renderer.windowH};
+
+		for (int i = -5; i < 5; i++)
+		{
+			glm::mat4 model =
+				glm::translate(glm::vec3(i,0,0)) * glm::scale(glm::vec3{0.1,100,1});
+			glUniformMatrix4fv(assetManager.default3DShader.u_model, 1, 0, &model[0][0]);
+
+			renderer.renderRectangle(fullQuadSize, {0,0,0,0.5});
+			renderer.flush();
+
+		}
+
+		renderer.popShader();
+
+
 		glm::mat4 rotationMatrix(1.0);
 		glm::vec2 cursorPos = platform::getRelMousePosition();
 		cursorPos /= glm::vec2(w, h);
@@ -164,6 +191,7 @@ bool gameLogic(float deltaTime, platform::Input &input)
 		//renderer.flush();
 		//renderer.popShader();
 
+		renderer.popCamera();
 	}
 
 
