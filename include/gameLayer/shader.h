@@ -10,6 +10,9 @@ struct Shader
 	GLint iTime = -1;
 	GLint u_viewProjection = -1;
 	GLint u_model = -1;
+	GLint u_CursorPosition = -1;
+	GLint u_background = -1;
+	
 
 	void load(const char *path);
 
@@ -38,20 +41,31 @@ struct Shader
 struct AssetManager
 {
 
+	gl2d::FrameBuffer background;
+
 	gl2d::Texture emptyCard;
 	gl2d::Texture earthCard;
 	gl2d::Texture cardPacket;
-
+	gl2d::Texture star;
+	gl2d::Texture cardGrid;
+	gl2d::Texture white1pxSquareTexture;
+	
 	Shader backgroundShader;
 	Shader default3DShader;
 	Shader holographicShader;
+	Shader dither;
+	Shader glass;
+	Shader paper;
 
 	std::initializer_list<std::reference_wrapper<Shader>> getAllShaders()
 	{
 		return  {
 			std::ref(backgroundShader), 
 			std::ref(default3DShader), 
-			std::ref(holographicShader)
+			std::ref(holographicShader),
+			std::ref(dither),
+			std::ref(glass),
+			std::ref(paper),
 		
 		};
 	}

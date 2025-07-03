@@ -22,7 +22,7 @@ void ShakeMotionState::update(float deltaTime)
 
 			desiredOrientation = {0,0,1};
 
-			if(1)
+			if(staticAnimate)
 			{
 				// Small back-and-forth wiggle angle
 				float angle = time * 1.f; // adjust speed/amplitude as needed
@@ -124,21 +124,23 @@ glm::mat4 ShakeMotionState::getRotationMatrix()
 }
 
 void RenderingThing::render(gl2d::Renderer2D &renderer,
-	gl2d::Camera3D &camera3D, AssetManager &assetManager
-	, float w, float h, float timer)
+	gl2d::Camera3D &camera3D, AssetManager &assetManager,
+	gl2d::Texture &texture, Shader &shader, glm::vec2 displacement,
+	float w, float h, float timer, bool addShadow, glm::vec4 color, glm::mat4 customMatrix)
 {
 
 	glm::mat4 positionMatrix = glm::translate(shakeMotionState.position);
 
-	glm::mat4 rotationMatrix = shakeMotionState.getRotationMatrix();
+	glm::mat4 rotationMatrix = shakeMotionState.getRotationMatrix() *
+		glm::translate(glm::vec3(displacement, 0)) * customMatrix;
+
 	//auto project = glm::perspective(glm::radians(90.f), (float)w / (float)h, 0.01f, 100.f);
 	//rotationMatrix = project * rotationMatrix;
 
 	glm::mat4 modelMatrix = positionMatrix * rotationMatrix;
 
-	glm::mat4 modelVireProjMatrix = camera3D.getViewProjectionMatrix() * modelMatrix;
-
 	glm::vec4 fullQuadSize = {0, 0, renderer.windowW, renderer.windowH};
+	glm::mat4 viewProjMatrix = camera3D.getViewProjectionMatrix();
 
 
 	auto bindShaderAndSendUniforms = [&](Shader &s,
@@ -149,6 +151,11 @@ void RenderingThing::render(gl2d::Renderer2D &renderer,
 		glUniform1f(s.iTime, timer);
 		glUniformMatrix4fv(s.u_viewProjection, 1, 0, &modelView[0][0]);
 		glUniformMatrix4fv(s.u_model, 1, 0, &model[0][0]);
+
+		glUniform1i(s.u_background, 2);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, assetManager.background.texture.id);
+
 	};
 
 	auto renderShadow = [&]()
@@ -157,26 +164,26 @@ void RenderingThing::render(gl2d::Renderer2D &renderer,
 
 		glm::mat4 positionMatrixShadow = glm::translate(shakeMotionState.position + glm::vec3{shadowDistance,shadowDistance,0});
 		glm::mat4 shadowModelMatrix = positionMatrixShadow * rotationMatrix;
-		glm::mat4 shadowModelVireProjMatrix = camera3D.getViewProjectionMatrix() * shadowModelMatrix;
 
 		renderer.pushShader(assetManager.default3DShader.shader);
 		bindShaderAndSendUniforms(assetManager.default3DShader, 
-			shadowModelVireProjMatrix, shadowModelMatrix);
+			viewProjMatrix, shadowModelMatrix);
 		renderer.renderRectangle(fullQuadSize,
-			assetManager.cardPacket, {0,0,0,0.5}, {}, shakeMotionState.currentRotation);
+			texture, {0,0,0,0.5}, {}, shakeMotionState.currentRotation);
 		renderer.flush();
 		renderer.popShader();
 
 	};
 
-	renderShadow();
+	if(addShadow) renderShadow();
 
-	renderer.pushShader(assetManager.holographicShader.shader);
+	renderer.pushShader(shader.shader);
 	
-	bindShaderAndSendUniforms(assetManager.holographicShader, modelVireProjMatrix, modelMatrix);
+	bindShaderAndSendUniforms(shader,
+		viewProjMatrix, modelMatrix);
 	
-	renderer.renderRectangle(fullQuadSize, assetManager.cardPacket,
-		Colors_White, {}, shakeMotionState.currentRotation, GL2D_DefaultTextureCoords, 0.0);
+	renderer.renderRectangle(fullQuadSize, texture,
+		color, {}, shakeMotionState.currentRotation, GL2D_DefaultTextureCoords, 0.0);
 	renderer.flush();
 	renderer.popShader();
 
@@ -184,5 +191,29 @@ void RenderingThing::render(gl2d::Renderer2D &renderer,
 
 }
 
+void RenderingThing::renderLine(gl2d::Renderer2D &renderer, gl2d::Camera3D &camera3D,
+	AssetManager &assetManager, gl2d::Texture &texture, 
+	Shader &shader, glm::vec2 displacement, glm::vec2 start, 
+	glm::vec2 end, float w, float h, float timer, bool addShadow, glm::vec4 color)
+{
+	start /= 2.f;
+	end /= 2.f;
 
+	glm::vec2 direction = end - start;
+	float length = glm::length(direction);
+	if (length == 0.0f) return;
 
+	glm::vec2 midPoint = (start + end) * 0.5f;
+	float angle = atan2(direction.y, direction.x);
+
+	float scaleBias = 0.04;
+	float displacementBias = 0.9;
+
+	glm::mat4 transform(1.0f);
+	transform = glm::translate(transform, glm::vec3(midPoint*2.f * displacementBias + displacement, 0.0f));
+	transform = glm::rotate(transform, angle, glm::vec3(0.0f, 0.0f, 1.0f));
+	transform = glm::scale(transform, glm::vec3(length - scaleBias, 0.02f, 1.0f));
+
+	render(renderer, camera3D, assetManager, texture, shader, displacement,
+		w, h, timer, addShadow, color, transform);
+}

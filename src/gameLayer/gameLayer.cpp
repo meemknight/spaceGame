@@ -16,16 +16,16 @@
 #include "shader.h"
 #include "assetManager.h"
 #include "renderingThing.h"
+#include <card.h>
 
 
 gl2d::Renderer2D renderer;
 
 AssetManager assetManager;
-gl2d::FrameBuffer background;
-RenderingThing renderingThing;
+CardWithPosition handCard;
 gl2d::Camera3D camera3D;
 
-
+std::vector<CardWithPosition> cards;
 
 bool initGame()
 {
@@ -37,7 +37,10 @@ bool initGame()
 	platform::log("Init");
 
 	assetManager.loadAll();
-	background.create(1, 1);
+	assetManager.background.create(1, 1);
+
+	handCard.card = getRandomCard();
+
 
 	return true;
 }
@@ -96,8 +99,12 @@ bool gameLogic(float deltaTime, platform::Input &input)
 	assetManager.tryReload();
 #endif
 
-	background.resize(w, h);
-
+	if (w != assetManager.background.w ||
+		h != assetManager.background.h)
+	{
+		assetManager.background.clear();
+		assetManager.background.resize(w, h);
+	}
 
 	glm::vec2 mousePosition = {input.mouseX, input.mouseY};
 	mousePosition = glm::clamp(mousePosition, glm::vec2(0, 0), glm::vec2(w, h));
@@ -106,7 +113,7 @@ bool gameLogic(float deltaTime, platform::Input &input)
 		mousePosition.y, w, h, camera3D.getViewMatrix(),
 		camera3D.getProjectionMatrix());
 
-	renderingThing.shakeMotionState.desiredPosition = {worldPosition, 0};
+	handCard.renderingThing.shakeMotionState.desiredPosition = {worldPosition, 0};
 
 	//std::cout << worldPosition.x << " " << worldPosition.y << "\n";
 
@@ -118,10 +125,10 @@ bool gameLogic(float deltaTime, platform::Input &input)
 		glUniform2f(assetManager.backgroundShader.iResolution, w, h);
 		glUniform1f(assetManager.backgroundShader.iTime, timer);
 		renderer.renderRectangle({0,0, w, h});
-		renderer.flushFBO(background);
+		renderer.flushFBO(assetManager.background);
 		renderer.popShader();
 
-		renderer.renderRectangle({0,0, w, h}, background.texture);
+		renderer.renderRectangle({0,0, w, h}, assetManager.background.texture);
 		renderer.flush();
 
 
@@ -133,34 +140,72 @@ bool gameLogic(float deltaTime, platform::Input &input)
 	camera3D.aspectRatio = w / (float)h;
 	camera3D.position = {0,0, 5};
 
+	if (input.isButtonPressed(platform::Button::Q))
+	{
+		handCard.card.rotateLeft();
+	}
+
+	if (input.isButtonPressed(platform::Button::E))
+	{
+		handCard.card.rotateRight();
+	}
+
+	if (input.isLMousePressed())
+	{
+		CardWithPosition c;
+		c = handCard;
+		c.renderingThing.shakeMotionState.desiredPosition =
+			glm::vec3(glm::ivec2(glm::round(c.renderingThing.shakeMotionState.position)), 0);
+
+		c.renderingThing.shakeMotionState.staticAnimate = false;
+
+		cards.push_back(c);
+
+		handCard.card = getRandomCard();
+
+	}
+
+
 	//basic cards
 	if(w != 0 && h != 0)
 	{
 		renderer.pushCamera();
 
-
 		//grid
+	#pragma region grid
+		glm::vec4 gridColor = {0.2,0.2,0.5, 0.5};
 		glm::mat4 viewProj = camera3D.getViewProjectionMatrix();
 
-		renderer.pushShader(assetManager.default3DShader.shader);
-		glUseProgram(assetManager.default3DShader.shader.id);
-		glUniform2f(assetManager.default3DShader.iResolution, w, h);
-		glUniform1f(assetManager.default3DShader.iTime, timer);
-		glUniformMatrix4fv(assetManager.default3DShader.u_viewProjection, 1, 0, &viewProj[0][0]);
+		renderer.pushShader(assetManager.dither.shader);
+		glUseProgram(assetManager.dither.shader.id);
+		glUniform2f(assetManager.dither.iResolution, w, h);
+		glUniform1f(assetManager.dither.iTime, timer);
+		glUniform2f(assetManager.dither.u_CursorPosition, input.mouseX, input.mouseY);
+		glUniformMatrix4fv(assetManager.dither.u_viewProjection, 1, 0, &viewProj[0][0]);
 		glm::vec4 fullQuadSize = {0, 0, renderer.windowW, renderer.windowH};
 
-		for (int i = -5; i < 5; i++)
+		for (int i = -10; i < 10; i++)
 		{
 			glm::mat4 model =
-				glm::translate(glm::vec3(i,0,0)) * glm::scale(glm::vec3{0.1,100,1});
-			glUniformMatrix4fv(assetManager.default3DShader.u_model, 1, 0, &model[0][0]);
+				glm::translate(glm::vec3(i,0,0)) * glm::scale(glm::vec3{0.02,100,1});
+			glUniformMatrix4fv(assetManager.dither.u_model, 1, 0, &model[0][0]);
 
-			renderer.renderRectangle(fullQuadSize, {0,0,0,0.5});
+			renderer.renderRectangle(fullQuadSize, gridColor);
 			renderer.flush();
+		}
 
+		for (int i = -10; i < 10; i++)
+		{
+			glm::mat4 model =
+				glm::translate(glm::vec3(0, i, 0)) * glm::scale(glm::vec3{100, 0.02, 1});
+			glUniformMatrix4fv(assetManager.dither.u_model, 1, 0, &model[0][0]);
+
+			renderer.renderRectangle(fullQuadSize, gridColor);
+			renderer.flush();
 		}
 
 		renderer.popShader();
+	#pragma endregion
 
 
 		glm::mat4 rotationMatrix(1.0);
@@ -169,9 +214,17 @@ bool gameLogic(float deltaTime, platform::Input &input)
 		cursorPos = glm::clamp(cursorPos, glm::vec2(0), glm::vec2(1.f));
 		cursorPos -= glm::vec2(0.5f); // Now range is [-0.5, 0.5]
 
-		renderingThing.shakeMotionState.update(deltaTime);
 
-		renderingThing.render(renderer, camera3D, assetManager, w, h, timer);
+		for (auto &c : cards)
+		{
+			c.renderingThing.shakeMotionState.update(deltaTime);
+			c.card.render(c.renderingThing, renderer, camera3D, assetManager, w, h, timer);
+
+		}
+
+
+		handCard.renderingThing.shakeMotionState.update(deltaTime);
+		handCard.card.render(handCard.renderingThing, renderer, camera3D, assetManager, w, h, timer);
 
 
 		//renderer.pushShader(holographicShader.shader);

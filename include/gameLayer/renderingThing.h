@@ -4,7 +4,7 @@
 
 
 struct AssetManager;
-
+struct Shader;
 
 //used to move the cards slightly
 struct ShakeMotionState
@@ -24,19 +24,27 @@ struct ShakeMotionState
 	glm::vec3 position = {};
 	glm::vec3 desiredPosition = {};
 
+	bool staticAnimate = 1; //animates it when not moving;
 
 };
 
-
+//todo disolve this
 struct RenderingThing
 {
 
 	ShakeMotionState shakeMotionState;
 
 	void render(gl2d::Renderer2D &renderer,
-		gl2d::Camera3D &camera3D,
-		AssetManager &assetManager,
-		float w, float h, float timer);
+		gl2d::Camera3D &camera3D, AssetManager &assetManager,
+		gl2d::Texture &texture, Shader &shader, glm::vec2 displacement,
+		float w, float h, float timer, bool addShadow, 
+		glm::vec4 color, glm::mat4 customMatrix = glm::mat4(1.f));
 
+	void renderLine(gl2d::Renderer2D &renderer,
+		gl2d::Camera3D &camera3D, AssetManager &assetManager,
+		gl2d::Texture &texture, Shader &shader, glm::vec2 displacement,
+		glm::vec2 start, glm::vec2 end,
+		float w, float h, float timer, bool addShadow,
+		glm::vec4 color);
 
 };

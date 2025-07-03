@@ -19,7 +19,9 @@ void Shader::loadUniforms()
 	iTime = glGetUniformLocation(shader.id, "iTime");
 	u_viewProjection = glGetUniformLocation(shader.id, "u_viewProjection");
 	u_model = glGetUniformLocation(shader.id, "u_model");
-	
+	u_CursorPosition = glGetUniformLocation(shader.id, "u_CursorPosition");
+	u_background = glGetUniformLocation(shader.id, "u_background");
+
 }
 
 void Shader::tryReload()
@@ -71,7 +73,7 @@ GL2D_OPNEGL_SHADER_PRECISION "\n"
 "   mat3 rotationMatrix = mat3(u_model);\n"
 "   vec3 transformedNormal = normalize(rotationMatrix * vec3(0,0,1));\n"
 "   v_normal = transformedNormal;\n"
-"	gl_Position = u_viewProjection * vec4(quad_positions, 1);\n"
+"	gl_Position = u_viewProjection * u_model * vec4(quad_positions, 1);\n"
 "	//gl_Position.z = 0.0;\n"
 "	v_color = quad_colors;\n"
 "	v_texture = texturePositions;\n"
@@ -122,6 +124,9 @@ void AssetManager::loadAll()
 	backgroundShader.load(RESOURCES_PATH "space.frag");
 	holographicShader.load3DShader(RESOURCES_PATH "balatro.frag");
 	default3DShader.loadDefault3DShader();
+	dither.load3DShader(RESOURCES_PATH "dither.frag");
+	glass.load3DShader(RESOURCES_PATH "glass.frag");
+	paper.load3DShader(RESOURCES_PATH "paper.frag");
 
 	auto load = [&](const char *p)
 	{
@@ -133,7 +138,9 @@ void AssetManager::loadAll()
 	emptyCard = load(RESOURCES_PATH "cards/empty.png");
 	earthCard = load(RESOURCES_PATH "cards/earth.png");
 	cardPacket = load(RESOURCES_PATH "cards/cardpack.png");
-
+	star = load(RESOURCES_PATH "cards/star.png");
+	cardGrid = load(RESOURCES_PATH "cards/grid.png");
+	white1pxSquareTexture.create1PxSquare();
 }
 
 void AssetManager::tryReload()
