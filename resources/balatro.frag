@@ -4,6 +4,7 @@ precision highp float;
 out vec4 color;
 in vec2 v_texture;
 in vec3 v_normal;
+in vec4 v_color;
 
 uniform sampler2D u_sampler;
 uniform vec2 iResolution;
@@ -104,6 +105,8 @@ vec3 effectSilverFoil(vec3 baseColor, vec2 uv, vec3 n, vec3 v, vec3 l) {
 }
 
 vec3 effectHolographic(vec3 baseColor, vec2 uv, vec3 n, vec3 v, vec3 l) {
+
+	baseColor = pow(baseColor, vec3(0.7));
 
 	float time = iTime * 1.0;
 	float timeShift = 0.0;
@@ -255,8 +258,8 @@ vec3 sticker(vec2 planeUV, vec3 planeNormal, vec3 hitPos)
 	vec3 l = normalize(vec3(sin(iTime*0.1)*0.3 + 0.85, cos(iTime*0.07)*0.2 + 0.88, 4.0)); // some constant directional light
 
 
-	vec3 baseColor = texture(u_sampler, planeUV).rgb;
-	
+	vec3 baseColor = texture(u_sampler, planeUV).rgb * v_color.rgb;
+
 	vec3 finalColor;
 
 	if (kEffectMode == 0) finalColor = effectGoldFoil(baseColor, planeUV, planeNormal, v, l);
@@ -273,12 +276,12 @@ vec3 sticker(vec2 planeUV, vec3 planeNormal, vec3 hitPos)
 
 void main()
 {
-	float opacity = texture(u_sampler, v_texture).a;
+	float opacity = texture(u_sampler, v_texture).a * v_color.a;
 	
 	if(opacity < 0.1){discard;}
 
 	//gl_FragCoord.xy
 	color = vec4(sticker(v_texture, v_normal, vec3(v_texture.xy, 0)), 1);
-
 }
+
 

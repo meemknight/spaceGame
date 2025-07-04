@@ -57,15 +57,15 @@ struct AssetManager
 	Shader glass;
 	Shader paper;
 
-	std::initializer_list<std::reference_wrapper<Shader>> getAllShaders()
+	std::vector<Shader*> getAllShaders()
 	{
 		return  {
-			std::ref(backgroundShader), 
-			std::ref(default3DShader), 
-			std::ref(holographicShader),
-			std::ref(dither),
-			std::ref(glass),
-			std::ref(paper),
+			(&backgroundShader), 
+			(&default3DShader), 
+			(&holographicShader),
+			(&dither),
+			(&glass),
+			(&paper),
 		
 		};
 	}

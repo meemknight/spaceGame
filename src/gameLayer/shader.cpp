@@ -28,26 +28,26 @@ void Shader::tryReload()
 {
 	if (loadType != 0 && loadType != LOADDEFAULT3DSHADER)
 	{
-
+		std::string pathCopy = fragmentChanged.path;
 		if (fragmentChanged.changed())
 		{
 			switch (loadType)
 			{
 				case LOAD:
 				{
-					load(fragmentChanged.path.string().c_str());
+					load(pathCopy.c_str());
 					break;
 				}
-
+		
 				case LOAD3DSHADER:
 				{
-					load3DShader(fragmentChanged.path.string().c_str());
+					load3DShader(pathCopy.c_str());
 					break;
 				}
-
+		
 			}
-
-
+		
+		
 		}
 
 	}
@@ -145,9 +145,10 @@ void AssetManager::loadAll()
 
 void AssetManager::tryReload()
 {
-	for (auto &s : getAllShaders())
+	auto allShaders = getAllShaders();
+	for (auto &s : allShaders)
 	{
-		s.get().tryReload();
+		s->tryReload();
 
 	}
 

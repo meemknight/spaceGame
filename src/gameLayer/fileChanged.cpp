@@ -5,7 +5,7 @@
 
 	void FileChanged::setFile(const char *path)
 	{
-		this->path = path;
+		this->path = std::string(path);
 
 		WIN32_FILE_ATTRIBUTE_DATA Data = {};
 		if (GetFileAttributesEx(path, GetFileExInfoStandard, &Data))
@@ -31,7 +31,8 @@
 		if (path.empty()) { return 0; }
 
 		WIN32_FILE_ATTRIBUTE_DATA Data = {};
-		if (GetFileAttributesEx(path.string().c_str(), GetFileExInfoStandard, &Data))
+		const char *s = path.c_str();
+		if (GetFileAttributesExA(s, GetFileExInfoStandard, &Data))
 		{
 			if (time.dwHighDateTime == Data.ftLastWriteTime.dwHighDateTime
 				&& time.dwLowDateTime == Data.ftLastWriteTime.dwLowDateTime)

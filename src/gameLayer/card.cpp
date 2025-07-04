@@ -9,7 +9,7 @@ void Card::render(RenderingThing &renderingThing, gl2d::Renderer2D &renderer,
 	float w, float h, float timer)
 {
 
-	auto defaultCardShader = assetManager.paper;
+	auto defaultCardShader = assetManager.holographicShader;
 
 	renderingThing.render(renderer, camera3D,
 		assetManager, assetManager.emptyCard, defaultCardShader, {},
@@ -40,7 +40,7 @@ void Card::render(RenderingThing &renderingThing, gl2d::Renderer2D &renderer,
 		auto c = getColor(element.color);
 
 		renderingThing.render(renderer, camera3D,
-			assetManager, t, assetManager.paper, displacement,
+			assetManager, t, defaultCardShader, displacement,
 			w, h, timer, false, c);
 
 	};

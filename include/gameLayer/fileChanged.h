@@ -13,7 +13,7 @@
 	struct FileChanged
 	{
 
-		std::filesystem::path path;
+		std::string path = {};
 
 		void setFile(const char *path);
 		bool changed();
