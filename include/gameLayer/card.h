@@ -58,9 +58,16 @@ struct Joint
 		JOINTS_TYPE_COUNT
 	};
 
+	Joint() {};
+	Joint(unsigned char start, unsigned char end):start(start), end(end) {};
 
 	unsigned char start = 0;
 	unsigned char end = 0;
+
+	bool operator==(const Joint &other) const
+	{
+		return start == other.start && end == other.end;
+	}
 
 	void rotateLeft()
 	{
@@ -119,6 +126,8 @@ struct Card
 	CardElement topRightCardElement;
 	CardElement bottomLeftCardElement;
 	CardElement bottomRightCardElement;
+
+	int rotation = 0; // + = right   - = left
 
 	std::vector<Joint> joints;
 

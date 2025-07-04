@@ -1,21 +1,23 @@
 #include <card.h>
 #include <shader.h>
 #include <random>
+#include "randomStuff.h"
+#include <algorithm>
 
 void Card::render(RenderingThing &renderingThing, gl2d::Renderer2D &renderer,
 	gl2d::Camera3D &camera3D, AssetManager &assetManager,
 	float w, float h, float timer)
 {
 
-	auto defaultCardShader = assetManager.glass;
+	auto defaultCardShader = assetManager.paper;
 
 	renderingThing.render(renderer, camera3D,
 		assetManager, assetManager.emptyCard, defaultCardShader, {},
-		w, h, timer, true, {1,1,1,1});
+		w, h, timer, true, {1,1,1,1}, glm::mat4(1.f), rotation * glm::radians(90.f));
 
 	renderingThing.render(renderer, camera3D,
 		assetManager, assetManager.cardGrid, defaultCardShader, {},
-		w, h, timer, false, {1,1,1,1});
+		w, h, timer, false, {1,1,1,1}, glm::mat4(1.f), rotation * glm::radians(90.f));
 
 	for (auto &j : joints)
 	{
@@ -63,6 +65,9 @@ void Card::rotateLeft()
 	{
 		j.rotateLeft();
 	}
+	
+	rotation--;
+	if (rotation < 0) { rotation = 3; }
 }
 
 void Card::rotateRight()
@@ -77,6 +82,9 @@ void Card::rotateRight()
 	{
 		j.rotateRight();
 	}
+
+	rotation++;
+	if (rotation > 3) { rotation = 0; }
 }
 
 glm::vec4 getColor(int type)
@@ -155,8 +163,87 @@ std::vector<Joint> getRandomJoints(Card &c)
 {
 	std::vector<Joint> rez;
 
-	rez.push_back({Joint::top, Joint::left});
-	rez.push_back({Joint::top, Joint::middleTopRight});
+	static std::random_device rd;
+	static std::ranlux24_base rng(rd());
+
+	//rez.push_back({Joint::top, Joint::middleTopLeft});
+	//rez.push_back({Joint::middleTopLeft, Joint::left});
+	//rez.push_back({Joint::top, Joint::middleTopRight});
+	
+	auto doOneElement = [&](Joint combination[], int count)
+	{
+		rez.push_back(combination[getRandomInt(rng, 0, 3)]);
+
+		if (getRandomChance(rng, 0.5))
+		{
+			rez.push_back(combination[getRandomInt(rng, 0, 3)]);
+		}
+
+		if (getRandomChance(rng, 0.1))
+		{
+			rez.push_back(combination[getRandomInt(rng, 0, 3)]);
+		}
+	};
+
+	if (c.topLeftCardElement.type != none)
+	{
+		Joint combination[] = {
+		Joint(Joint::middleTopLeft, Joint::topLeft),
+		Joint(Joint::middleTopLeft, Joint::top),
+		Joint(Joint::middleTopLeft, Joint::center),
+		Joint(Joint::middleTopLeft, Joint::left),
+		};
+
+		doOneElement(combination, 4);
+	}
+
+	if (c.topRightCardElement.type != none)
+	{
+		Joint combination[] = {
+		Joint(Joint::middleTopRight, Joint::topRight),
+		Joint(Joint::middleTopRight, Joint::top),
+		Joint(Joint::middleTopRight, Joint::center),
+		Joint(Joint::middleTopRight, Joint::right),
+		};
+
+		doOneElement(combination, 4);
+	}
+
+	if (c.bottomLeftCardElement.type != none)
+	{
+		Joint combination[] = {
+		Joint(Joint::middleBottomLeft, Joint::bottomLeft),
+		Joint(Joint::middleBottomLeft, Joint::bottom),
+		Joint(Joint::middleBottomLeft, Joint::center),
+		Joint(Joint::middleBottomLeft, Joint::left),
+		};
+
+		doOneElement(combination, 4);
+	}
+
+	if (c.bottomRightCardElement.type != none)
+	{
+		Joint combination[] = {
+		Joint(Joint::middleBottomRight, Joint::bottomRight),
+		Joint(Joint::middleBottomRight, Joint::bottom),
+		Joint(Joint::middleBottomRight, Joint::center),
+		Joint(Joint::middleBottomRight, Joint::right),
+		};
+
+		doOneElement(combination, 4);
+	}
+
+
+
+	// This requires that operator== is defined for Joint
+	std::sort(rez.begin(), rez.end(), [](const Joint &a, const Joint &b)
+	{
+		// Provide a consistent ordering (e.g., compare by ID or position)
+		return (a.start < b.start) || (a.start == b.start && a.end < b.end);
+	});
+
+	rez.erase(std::unique(rez.begin(), rez.end()), rez.end());
+
 
 	return rez;
 }

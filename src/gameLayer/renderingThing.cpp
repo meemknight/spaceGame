@@ -33,7 +33,7 @@ void ShakeMotionState::update(float deltaTime)
 					0.0f);
 				desiredOrientation = glm::normalize(glm::vec3(rotated));
 				
-				//desiredRotation = sin(time * 2.0f) * 1.0f;
+				desiredRotation = sin(time * 2.0f) * 0.02f;
 			}
 		}
 		else
@@ -126,12 +126,14 @@ glm::mat4 ShakeMotionState::getRotationMatrix()
 void RenderingThing::render(gl2d::Renderer2D &renderer,
 	gl2d::Camera3D &camera3D, AssetManager &assetManager,
 	gl2d::Texture &texture, Shader &shader, glm::vec2 displacement,
-	float w, float h, float timer, bool addShadow, glm::vec4 color, glm::mat4 customMatrix)
+	float w, float h, float timer, bool addShadow, glm::vec4 color, glm::mat4 customMatrix,
+	float rotation)
 {
 
 	glm::mat4 positionMatrix = glm::translate(shakeMotionState.position);
 
-	glm::mat4 rotationMatrix = shakeMotionState.getRotationMatrix() *
+	glm::mat4 rotationMatrix = glm::rotate(rotation + shakeMotionState.currentRotation,
+		glm::vec3{0,0,1}) * shakeMotionState.getRotationMatrix() *
 		glm::translate(glm::vec3(displacement, 0)) * customMatrix;
 
 	//auto project = glm::perspective(glm::radians(90.f), (float)w / (float)h, 0.01f, 100.f);
@@ -169,7 +171,7 @@ void RenderingThing::render(gl2d::Renderer2D &renderer,
 		bindShaderAndSendUniforms(assetManager.default3DShader, 
 			viewProjMatrix, shadowModelMatrix);
 		renderer.renderRectangle(fullQuadSize,
-			texture, {0,0,0,0.5}, {}, shakeMotionState.currentRotation);
+			texture, {0,0,0,0.5}, {}, 0);
 		renderer.flush();
 		renderer.popShader();
 
@@ -183,7 +185,7 @@ void RenderingThing::render(gl2d::Renderer2D &renderer,
 		viewProjMatrix, modelMatrix);
 	
 	renderer.renderRectangle(fullQuadSize, texture,
-		color, {}, shakeMotionState.currentRotation, GL2D_DefaultTextureCoords, 0.0);
+		color, {}, 0, GL2D_DefaultTextureCoords, 0.0);
 	renderer.flush();
 	renderer.popShader();
 

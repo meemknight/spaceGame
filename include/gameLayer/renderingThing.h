@@ -37,8 +37,8 @@ struct RenderingThing
 	void render(gl2d::Renderer2D &renderer,
 		gl2d::Camera3D &camera3D, AssetManager &assetManager,
 		gl2d::Texture &texture, Shader &shader, glm::vec2 displacement,
-		float w, float h, float timer, bool addShadow, 
-		glm::vec4 color, glm::mat4 customMatrix = glm::mat4(1.f));
+		float w, float h, float timer, bool addShadow,
+		glm::vec4 color, glm::mat4 customMatrix = glm::mat4(1.f), float rotation = 0);
 
 	void renderLine(gl2d::Renderer2D &renderer,
 		gl2d::Camera3D &camera3D, AssetManager &assetManager,
